@@ -1,4 +1,6 @@
-package com.edsoftware.edbiometria;
+package com.edsoftware.edbiometria.usecase;
+
+import com.edsoftware.edbiometria.ui.MainForm;
 
 import javax.swing.*;
 

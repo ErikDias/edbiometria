@@ -1,4 +1,4 @@
-package com.edsoftware.edbiometria;
+package com.edsoftware.edbiometria.domain;
 
 import lombok.Data;
 
@@ -12,6 +12,6 @@ public class Usuario {
     @Id
     @GeneratedValue
     private Integer id;
-    @Column(length=16777215)
-    private byte[] fingerPrint;
+    @Column(length=3000)
+    private byte fingerPrint;
 }
