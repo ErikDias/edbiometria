@@ -13,5 +13,5 @@ public class Usuario {
     @GeneratedValue
     private Integer id;
     @Column(length=3000)
-    private byte fingerPrint;
+    private byte[] fingerPrint;
 }

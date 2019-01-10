@@ -26,7 +26,8 @@ public class MainForm implements IEnrollmentCallBack , IVerificationCallBack, II
 
     private static final int SIZE_OF_PAGE = 1000;
     private final UsuarioService usuarioService;
-    private FutronicSdkBase futronicSdkBase;
+    private FutronicSdkBase m_Operation;
+    private Object m_OperationObj;
 
     @Getter
     private JPanel panel1;
@@ -41,12 +42,24 @@ public class MainForm implements IEnrollmentCallBack , IVerificationCallBack, II
     public MainForm(UsuarioService usuarioService) throws FutronicException {
         this.usuarioService = usuarioService;
         buildIcon();
-        buildFutronicSdkBase();
         salvarDigitalButton.addActionListener(e -> {
-            ((FutronicEnrollment) futronicSdkBase).Enrollment( this );
+            try {
+                buildFutronicSdkBase();
+                ((FutronicEnrollment) m_Operation).Enrollment( this );
+            } catch (FutronicException e1) {
+                e1.printStackTrace();
+                txtMessage.setText("Nao foi possivel salvar.");
+            }
         });
         identificarButton.addActionListener(e -> {
-            ((FutronicIdentification) futronicSdkBase).GetBaseTemplate( this );
+            try {
+                m_OperationObj = null;
+                buildFutronicSdkBase();
+                ((FutronicIdentification) m_Operation).GetBaseTemplate( this );
+            } catch (FutronicException e1) {
+                e1.printStackTrace();
+                txtMessage.setText("Nao foi possivel identificar.");
+            }
         });
     }
 
@@ -60,14 +73,14 @@ public class MainForm implements IEnrollmentCallBack , IVerificationCallBack, II
     }
 
     private void buildFutronicSdkBase() throws FutronicException {
-        futronicSdkBase = new FutronicEnrollment();
-        futronicSdkBase.setFakeDetection(false);
-        futronicSdkBase.setFFDControl(true);
-        futronicSdkBase.setFARN(166);
-        futronicSdkBase.setFastMode(false);
-        ((FutronicEnrollment) futronicSdkBase).setMIOTControlOff(true);
-        ((FutronicEnrollment) futronicSdkBase).setMaxModels(1);
-        futronicSdkBase.setVersion(VersionCompatible.ftr_version_previous);
+        m_Operation = new FutronicEnrollment();
+        m_Operation.setFakeDetection(false);
+        m_Operation.setFFDControl(true);
+        m_Operation.setFARN(166);
+        m_Operation.setFastMode(false);
+        ((FutronicEnrollment) m_Operation).setMIOTControlOff(true);
+        ((FutronicEnrollment) m_Operation).setMaxModels(1);
+        m_Operation.setVersion(VersionCompatible.ftr_version_previous);
     }
 
     @Override
@@ -77,11 +90,12 @@ public class MainForm implements IEnrollmentCallBack , IVerificationCallBack, II
             txtMessage.setText("Digital registrada.");
         } else
             txtMessage.setText("Digital nao registrada.");
+        m_Operation = null;
     }
 
     private void salvarUsuario() {
         Usuario usuario = new Usuario();
-        usuario.setFingerPrint(((FutronicEnrollment) futronicSdkBase).getTemplate()[0]);
+        usuario.setFingerPrint(((FutronicEnrollment) m_Operation).getTemplate());
         usuarioService.save(usuario);
     }
 
@@ -95,11 +109,11 @@ public class MainForm implements IEnrollmentCallBack , IVerificationCallBack, II
                 FtrIdentifyRecord[] users = (FtrIdentifyRecord[]) currentPage.get().map(x -> {
                     FtrIdentifyRecord ftrIdentifyRecord = new FtrIdentifyRecord();
                     ftrIdentifyRecord.m_KeyValue[0] = x.getId().byteValue();
-                    ftrIdentifyRecord.m_Template[0] = x.getFingerPrint();
+                    ftrIdentifyRecord.m_Template = x.getFingerPrint();
                     return ftrIdentifyRecord;
                 }).getContent().toArray();
                 FtrIdentifyResult result = new FtrIdentifyResult();
-                int indexResult = ((FutronicIdentification) futronicSdkBase).Identification(users, result);
+                int indexResult = ((FutronicIdentification) m_Operation).Identification(users, result);
                 if (indexResult == FutronicSdkBase.RETCODE_OK) {
                     txtMessage.setText("Usuario encontrado, índice: " + Arrays.toString(users[indexResult].m_KeyValue));
                     userWasFound.set(true);
@@ -110,6 +124,7 @@ public class MainForm implements IEnrollmentCallBack , IVerificationCallBack, II
             if (!userWasFound.get())
                 txtMessage.setText("Usuário não encontrado.");
         }
+        m_Operation = null;
     }
 
     @Override
